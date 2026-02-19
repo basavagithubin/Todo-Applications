@@ -1,0 +1,33 @@
+# Node dependencies
+node_modules/
+client/node_modules/
+server/node_modules/
+
+# Builds and logs
+dist/
+build/
+coverage/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Env and local config
+.env
+.env.*
+server/.env
+client/.env
+.DS_Store
+Thumbs.db
+
+# Vite and cache
+.vite
+client/.vite
+.cache
+client/.cache
+server/.cache
+
+# IDE
+.vscode/
+.idea/
+*.iml
