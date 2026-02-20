@@ -3,17 +3,17 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 
 const security = (app) => {
-  const corsOrigin = process.env.CLIENT_ORIGIN || 'http://localhost:5173';
+  const origins = (process.env.CLIENT_ORIGINS || 'http://localhost:5173,http://localhost:5174').split(',');
   app.use(
     cors({
-      origin: corsOrigin,
+      origin: origins,
       credentials: true
     })
   );
   app.use(helmet());
   const limiter = rateLimit({
-    windowMs: 15 * 60 * 1000,
-    max: 100
+    windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || String(15 * 60 * 1000), 10),
+    max: parseInt(process.env.RATE_LIMIT_MAX || '1000', 10),
   });
   app.use(limiter);
 };

@@ -1,6 +1,7 @@
 const express = require('express');
 const morgan = require('morgan');
 const cookieParser = require('cookie-parser');
+const compression = require('compression');
 const { connectDB } = require('./config/db');
 const { security } = require('./middleware/security');
 const authRoutes = require('./routes/auth.routes');
@@ -14,8 +15,9 @@ const app = express();
 connectDB();
 app.set('trust proxy', 1);
 app.use(morgan('dev'));
-app.use(express.json());
+app.use(express.json({ limit: '1mb' }));
 app.use(cookieParser());
+app.use(compression());
 security(app);
 
 app.get('/api/health', (req, res) => {

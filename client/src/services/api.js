@@ -33,6 +33,16 @@ api.interceptors.response.use(
   (res) => res,
   async (err) => {
     const original = err.config
+    // Retry once on transient network changes in dev
+    const isNetworkChange =
+      err?.code === 'ERR_NETWORK' ||
+      /Network\s*Error/i.test(err?.message || '') ||
+      /ERR_NETWORK_CHANGED/i.test(err?.message || '')
+    if (isNetworkChange && !original?._netRetry) {
+      original._netRetry = true
+      await new Promise(r => setTimeout(r, 300))
+      return api(original)
+    }
     if (err.response && err.response.status === 401 && !original._retry) {
       original._retry = true
       try {

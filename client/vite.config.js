@@ -7,7 +7,7 @@ export default defineConfig({
   server: {
     host: 'localhost',
     port: 5173,
-    strictPort: true,
+    strictPort: false,
     cors: true,
     hmr: {
       overlay: false
@@ -15,6 +15,6 @@ export default defineConfig({
   },
   preview: {
     port: 5173,
-    strictPort: true
+    strictPort: false
   }
 })

@@ -44,7 +44,7 @@ const getTodos = async (req, res) => {
   })();
   const q = buildQuery(req.user.id, req.query);
   const [items, total] = await Promise.all([
-    Todo.find(q).sort(sort).skip(skip).limit(limit),
+    Todo.find(q).sort(sort).skip(skip).limit(limit).lean(),
     Todo.countDocuments(q)
   ]);
   res.json({ items, total, page, pages: Math.ceil(total / limit) });
@@ -92,7 +92,7 @@ const updateStatus = async (req, res) => {
 };
 
 const getTrash = async (req, res) => {
-  const items = await Todo.find({ user: req.user.id, isDeleted: true }).sort({ updatedAt: -1 });
+  const items = await Todo.find({ user: req.user.id, isDeleted: true }).sort({ updatedAt: -1 }).lean();
   res.json({ items });
 };
 

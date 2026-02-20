@@ -31,4 +31,10 @@ const todoSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+todoSchema.index({ user: 1, isDeleted: 1, createdAt: -1 });
+todoSchema.index({ user: 1, isDeleted: 1, status: 1, createdAt: -1 });
+todoSchema.index({ user: 1, isDeleted: 1, startDate: 1 });
+todoSchema.index({ user: 1, isDeleted: 1, priority: 1, createdAt: -1 });
+todoSchema.index({ user: 1, isDeleted: 1, tags: 1, createdAt: -1 });
+
 module.exports = mongoose.model('Todo', todoSchema);
