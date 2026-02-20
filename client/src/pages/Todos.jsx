@@ -29,7 +29,7 @@ const Todos = () => {
   const query = useMemo(() => {
     const q = new URLSearchParams()
     q.set('page', String(page))
-    q.set('limit', String(rows * 4))
+    q.set('limit', String(rows * 3))
     if (filters.search) q.set('search', filters.search)
     if (filters.status) q.set('status', filters.status)
     if (filters.priority) q.set('priority', filters.priority)
@@ -191,7 +191,7 @@ const Todos = () => {
       </div>
       {loading ? <div className="skeleton" /> : (
         <div
-          className="grid grid-cols-4 gap-5 md:grid-cols-2 sm:grid-cols-1"
+          className="grid grid-cols-3 gap-5 md:grid-cols-2 sm:grid-cols-1"
           style={{ gridAutoRows: '1fr', gridTemplateRows: `repeat(${rows}, minmax(0, 1fr))` }}
         >
           {items.map((t) => {
