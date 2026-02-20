@@ -21,10 +21,10 @@ function App() {
           <Route path="/dashboard" element={<Summary />} />
           <Route path="/todos" element={<Todos />} />
           <Route path="/todos/:id/progress" element={<ProgressPage />} />
+          <Route element={<RoleRoute roles={['superadmin']} />}>
+            <Route path="/admin" element={<AdminDashboard />} />
+          </Route>
         </Route>
-      </Route>
-      <Route element={<RoleRoute roles={['superadmin']} />}>
-        <Route path="/admin" element={<AdminDashboard />} />
       </Route>
       <Route path="*" element={<div className="centered"><Link to="/">Home</Link></div>} />
     </Routes>

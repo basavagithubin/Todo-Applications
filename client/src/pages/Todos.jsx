@@ -141,7 +141,7 @@ const Todos = () => {
   }
 
   return (
-    <div style={{display:'grid', gap:'1rem'}}>
+    <div className="space-y-6 max-w-[1600px] mx-auto">
       {!trash ? (
         <div className="tabs">
           <button className={`tab ${tab === 'all' ? 'active' : ''}`} onClick={() => changeTab('all')}>All</button>
@@ -190,7 +190,7 @@ const Todos = () => {
         <button className="btn btn-primary" onClick={add}>Add</button>
       </div>
       {loading ? <div className="skeleton" /> : (
-        <div className="grid grid-cols-4 gap-6 md:grid-cols-2 sm:grid-cols-1">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {items.map((t) => {
             const isEditing = !!edits[t._id]
             const edit = edits[t._id] || {}

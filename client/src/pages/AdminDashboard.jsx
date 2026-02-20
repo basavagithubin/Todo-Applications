@@ -1,11 +1,8 @@
 import { useEffect, useState } from 'react'
 import api from '../services/api'
-import { useAuth } from '../context/AuthContext'
 import { toast } from 'react-hot-toast'
-import { Link } from 'react-router-dom'
 
 const AdminDashboard = () => {
-  const { logout } = useAuth()
   const [stats, setStats] = useState(null)
   const [users, setUsers] = useState([])
   const [todos, setTodos] = useState([])
@@ -62,16 +59,10 @@ const AdminDashboard = () => {
   }
 
   return (
-    <div className="layout">
-      <aside className="sidebar">
-        <h3>Admin</h3>
-        <Link className="btn" to="/">Back</Link>
-        <button className="btn" onClick={logout}>Logout</button>
-      </aside>
-      <main className="content">
+    <div className="space-y-6">
         {!stats ? <div className="centered">Loading...</div> : (
           <>
-            <div className="grid">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               <div className="card"><h3>Total Users</h3><strong>{stats.totalUsers}</strong></div>
               <div className="card"><h3>Active Users</h3><strong>{stats.activeUsers}</strong></div>
               <div className="card"><h3>Blocked Users</h3><strong>{stats.blockedUsers}</strong></div>
@@ -79,7 +70,7 @@ const AdminDashboard = () => {
               <div className="card"><h3>Completed</h3><strong className="pill low">{stats.completedTodos}</strong></div>
               <div className="card"><h3>Pending</h3><strong className="pill high">{stats.pendingTodos}</strong></div>
             </div>
-            <div className="split">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <div className="card">
                 <h3>Users</h3>
                 <ul className="list">
@@ -115,7 +106,6 @@ const AdminDashboard = () => {
             </div>
           </>
         )}
-      </main>
     </div>
   )
 }

@@ -1,14 +1,20 @@
 import { Outlet } from 'react-router-dom'
-import Navbar from './Navbar'
+import Sidebar from './Sidebar'
+import Header from './Header'
+import MobileNav from './MobileNav'
 
 const Shell = () => {
   return (
-    <>
-      <Navbar />
-      <div className="container">
-        <Outlet />
-      </div>
-    </>
+    <div className="layout">
+      <Sidebar />
+      <main className="flex-1 flex flex-col min-h-screen bg-[var(--bg)] transition-colors duration-300">
+        <Header />
+        <div className="content">
+          <Outlet />
+        </div>
+        <MobileNav />
+      </main>
+    </div>
   )
 }
 
