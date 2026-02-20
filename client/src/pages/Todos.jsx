@@ -25,10 +25,11 @@ const Todos = () => {
   const [selected, setSelected] = useState([])
   const [tab, setTab] = useState(() => (filters.status === 'completed' ? 'completed' : filters.status === 'pending' ? 'pending' : 'all'))
   const [edits, setEdits] = useState({})
+  const [rows, setRows] = useState(4)
   const query = useMemo(() => {
     const q = new URLSearchParams()
     q.set('page', String(page))
-    q.set('limit', '16')
+    q.set('limit', String(rows * 4))
     if (filters.search) q.set('search', filters.search)
     if (filters.status) q.set('status', filters.status)
     if (filters.priority) q.set('priority', filters.priority)
@@ -37,7 +38,7 @@ const Todos = () => {
     if (filters.endDate) q.set('endDate', filters.endDate)
     if (filters.overdue) q.set('overdue', filters.overdue)
     return q.toString()
-  }, [page, filters])
+  }, [page, filters, rows])
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -157,6 +158,12 @@ const Todos = () => {
         {!trash && <>
           <button className="btn" onClick={filterOverdue}>Overdue</button>
           <button className="btn" onClick={filterToday}>Due Today</button>
+          <select className="input" value={rows} onChange={(e) => { setPage(1); setRows(Number(e.target.value)) }}>
+            <option value={2}>2 rows</option>
+            <option value={3}>3 rows</option>
+            <option value={4}>4 rows</option>
+            <option value={5}>5 rows</option>
+          </select>
         </>}
       </div>
       {!!selected.length && !trash && (
@@ -183,7 +190,10 @@ const Todos = () => {
         <button className="btn btn-primary" onClick={add}>Add</button>
       </div>
       {loading ? <div className="skeleton" /> : (
-        <div className="grid grid-cols-4 grid-rows-4 gap-5 md:grid-cols-2 sm:grid-cols-1" style={{gridAutoRows:'1fr'}}>
+        <div
+          className="grid grid-cols-4 gap-5 md:grid-cols-2 sm:grid-cols-1"
+          style={{ gridAutoRows: '1fr', gridTemplateRows: `repeat(${rows}, minmax(0, 1fr))` }}
+        >
           {items.map((t) => {
             const isEditing = !!edits[t._id]
             const edit = edits[t._id] || {}
@@ -325,18 +335,6 @@ const Todos = () => {
               {!trash && <div className="progressbar rounded-full overflow-hidden"><span style={{ width: `${(t.progress && t.progress.length ? t.progress[t.progress.length-1].percent : 0)}%` }} /></div>}
             </div>
           )})}
-          {!trash && (
-            <button
-              key="add-card"
-              onClick={() => {
-                const el = document.getElementById('new-title')
-                if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'center' }); el.focus() }
-              }}
-              className="rounded-2xl border border-dashed border-[var(--border)] bg-transparent hover:border-primary hover:text-primary transition-colors p-4 h-full flex items-center justify-center"
-            >
-              <span className="text-lg">+ Add New</span>
-            </button>
-          )}
         </div>
       )}
       <div className="pagination flex items-center justify-center gap-3 mt-2">
