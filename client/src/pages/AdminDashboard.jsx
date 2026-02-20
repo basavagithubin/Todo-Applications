@@ -16,7 +16,7 @@ const AdminDashboard = () => {
       const [a, u] = await Promise.all([api.get('/admin/analytics'), api.get('/admin/users')])
       setStats(a.data)
       setUsers(u.data.users)
-    } catch (e) {
+    } catch {
       toast.error('Failed to load admin data')
     }
   }
@@ -25,16 +25,26 @@ const AdminDashboard = () => {
     try {
       const r = await api.get('/admin/todos', { params: filterUser ? { user: filterUser } : {} })
       setTodos(r.data.items)
-    } catch (e) {
+    } catch {
       toast.error('Failed to load todos')
     }
   }
 
   useEffect(() => {
-    load()
+    let cancelled = false
+    Promise.all([api.get('/admin/analytics'), api.get('/admin/users')]).then(([a,u]) => {
+      if (cancelled) return
+      setStats(a.data)
+      setUsers(u.data.users)
+    }).catch(() => { toast.error('Failed to load admin data') })
+    return () => { cancelled = true }
   }, [])
   useEffect(() => {
-    loadTodos()
+    let cancelled = false
+    api.get('/admin/todos', { params: filterUser ? { user: filterUser } : {} }).then(r => {
+      if (!cancelled) setTodos(r.data.items)
+    }).catch(() => { toast.error('Failed to load todos') })
+    return () => { cancelled = true }
   }, [filterUser])
 
   const block = async (id) => {

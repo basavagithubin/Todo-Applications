@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, useCallback } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import api from '../services/api'
 import { toast } from 'react-hot-toast'
@@ -24,13 +24,11 @@ const Todos = () => {
   const [trash, setTrash] = useState(false)
   const [selected, setSelected] = useState([])
   const [tab, setTab] = useState(() => (filters.status === 'completed' ? 'completed' : filters.status === 'pending' ? 'pending' : 'all'))
-  const [openProgress, setOpenProgress] = useState({})
-  const [progressInput, setProgressInput] = useState({})
   const [edits, setEdits] = useState({})
   const query = useMemo(() => {
     const q = new URLSearchParams()
     q.set('page', String(page))
-    q.set('limit', '12')
+    q.set('limit', '16')
     if (filters.search) q.set('search', filters.search)
     if (filters.status) q.set('status', filters.status)
     if (filters.priority) q.set('priority', filters.priority)
@@ -41,7 +39,7 @@ const Todos = () => {
     return q.toString()
   }, [page, filters])
 
-  const load = async () => {
+  const load = useCallback(async () => {
     setLoading(true)
     try {
       if (trash) {
@@ -53,16 +51,14 @@ const Todos = () => {
         setItems(r.data.items)
         setPages(r.data.pages)
       }
-    } catch (e) {
+    } catch {
       toast.error('Failed to load todos')
     } finally {
       setLoading(false)
     }
-  }
-
-  useEffect(() => {
-    load()
   }, [query, trash])
+
+  useEffect(() => { load() }, [load])
 
   const changeTab = (next) => {
     setTab(next)
@@ -81,7 +77,7 @@ const Todos = () => {
     try {
       await api.post('/todos', payload)
       load()
-    } catch (e) {
+    } catch {
       toast.error('Failed to create')
       load()
     }
@@ -92,7 +88,7 @@ const Todos = () => {
     setItems(items.map((t) => (t._id === id ? { ...t, status } : t)))
     try {
       await api.patch(`/todos/${id}/status`, { status })
-    } catch (e) {
+    } catch {
       setItems(prev)
       toast.error('Failed to update')
     }
@@ -103,7 +99,7 @@ const Todos = () => {
     setItems(items.filter((t) => t._id !== id))
     try {
       await api.delete(`/todos/${id}`)
-    } catch (e) {
+    } catch {
       setItems(prev)
       toast.error('Failed to delete')
     }
@@ -113,7 +109,7 @@ const Todos = () => {
     try {
       await api.patch(`/todos/${id}/restore`)
       load()
-    } catch (e) {
+    } catch {
       toast.error('Failed to restore')
     }
   }
@@ -187,20 +183,23 @@ const Todos = () => {
         <button className="btn btn-primary" onClick={add}>Add</button>
       </div>
       {loading ? <div className="skeleton" /> : (
-        <div className="cards">
+        <div className="grid grid-cols-4 grid-rows-4 gap-5 md:grid-cols-2 sm:grid-cols-1" style={{gridAutoRows:'1fr'}}>
           {items.map((t) => {
             const isEditing = !!edits[t._id]
             const edit = edits[t._id] || {}
             return (
-            <div key={t._id} className="todo-card">
+            <div
+              key={t._id}
+              className="todo-card rounded-2xl border border-[var(--border)] bg-[var(--panel)] shadow p-4 h-full flex flex-col"
+            >
               <div className="todo-head">
                 <div className="todo-title">
                   {!trash && <input type="checkbox" checked={selected.includes(t._id)} onChange={(e) => toggleSelect(t._id, e.target.checked)} />}
                   {!isEditing ? (
-                    <h4 title={t.title}>{t.title}</h4>
+                    <h4 className="text-lg font-semibold" title={t.title}>{t.title}</h4>
                   ) : (
                     <input
-                      className="input small"
+                      className="input small rounded-xl"
                       placeholder="Title"
                       value={edit.title}
                       onChange={(e) => setEdits({ ...edits, [t._id]: { ...edit, title: e.target.value } })}
@@ -210,7 +209,7 @@ const Todos = () => {
                 <div className="todo-head-actions">
                   {!trash && !isEditing && (
                     <button
-                      className="btn btn-ghost btn-small"
+                      className="btn btn-ghost btn-small rounded-xl"
                       onClick={() =>
                         setEdits({
                           ...edits,
@@ -243,35 +242,35 @@ const Todos = () => {
                 {t.completedAt && <span className="pill date" title="Completed">{new Date(t.completedAt).toLocaleDateString()}</span>}
               </div>
               {!isEditing ? (
-                !!(t.tags && t.tags.length) && <div className="tags">{t.tags.map((tag, i) => <span key={i} className="tag">{tag}</span>)}</div>
+                !!(t.tags && t.tags.length) && <div className="tags">{t.tags.map((tag, i) => <span key={i} className="tag rounded-full">{tag}</span>)}</div>
               ) : (
                 <input
-                  className="input small"
+                  className="input small rounded-xl"
                   placeholder="tags, comma,separated"
                   value={edit.tags || ''}
                   onChange={(e) => setEdits({ ...edits, [t._id]: { ...edit, tags: e.target.value } })}
                 />
               )}
-              <div className="todo-controls">
+              <div className="todo-controls mt-auto">
                 {!trash && (
                   <>
                     {!isEditing ? (
                       <>
-                        <select className="input small" value={t.priority} onChange={(e) => api.put(`/todos/${t._id}`, { priority: e.target.value }).then(load)}>
+                        <select className="input small rounded-xl" value={t.priority} onChange={(e) => api.put(`/todos/${t._id}`, { priority: e.target.value }).then(load)}>
                           <option value="low">Low</option>
                           <option value="medium">Medium</option>
                           <option value="high">High</option>
                         </select>
-                        <input className="input small" type="date" value={(t.startDate ? new Date(t.startDate) : new Date(t.createdAt)).toISOString().slice(0,10)} onChange={(e) => api.put(`/todos/${t._id}`, { startDate: new Date(e.target.value) }).then(load)} />
+                        <input className="input small rounded-xl" type="date" value={(t.startDate ? new Date(t.startDate) : new Date(t.createdAt)).toISOString().slice(0,10)} onChange={(e) => api.put(`/todos/${t._id}`, { startDate: new Date(e.target.value) }).then(load)} />
                       </>
                     ) : (
                       <>
-                        <select className="input small" value={edit.priority} onChange={(e) => setEdits({ ...edits, [t._id]: { ...edit, priority: e.target.value } })}>
+                        <select className="input small rounded-xl" value={edit.priority} onChange={(e) => setEdits({ ...edits, [t._id]: { ...edit, priority: e.target.value } })}>
                           <option value="low">Low</option>
                           <option value="medium">Medium</option>
                           <option value="high">High</option>
                         </select>
-                        <input className="input small" type="date" value={edit.startDate} onChange={(e) => setEdits({ ...edits, [t._id]: { ...edit, startDate: e.target.value } })} />
+                        <input className="input small rounded-xl" type="date" value={edit.startDate} onChange={(e) => setEdits({ ...edits, [t._id]: { ...edit, startDate: e.target.value } })} />
                       </>
                     )}
                   </>
@@ -282,16 +281,16 @@ const Todos = () => {
                   <>
                     {!isEditing ? (
                       <>
-                        <button className="btn btn-success" onClick={() => toggle(t._id, t.status === 'completed' ? 'pending' : 'completed')}>
+                        <button className="btn btn-success rounded-xl" onClick={() => toggle(t._id, t.status === 'completed' ? 'pending' : 'completed')}>
                           {t.status === 'completed' ? 'Mark Pending' : 'Complete'}
                         </button>
-                        <button className="btn" onClick={() => navigate(`/todos/${t._id}/progress`)}>Progress</button>
-                        <button className="btn btn-danger" onClick={() => remove(t._id)}>Delete</button>
+                        <button className="btn rounded-xl" onClick={() => navigate(`/todos/${t._id}/progress`)}>Progress</button>
+                        <button className="btn btn-danger rounded-xl" onClick={() => remove(t._id)}>Delete</button>
                       </>
                     ) : (
                       <>
                         <button
-                          className="btn btn-success"
+                          className="btn btn-success rounded-xl"
                           onClick={async () => {
                             const payload = {
                               title: (edit.title || '').trim(),
@@ -307,7 +306,7 @@ const Todos = () => {
                           Save
                         </button>
                         <button
-                          className="btn"
+                          className="btn rounded-xl"
                           onClick={() => {
                             const { [t._id]: _, ...rest } = edits
                             setEdits(rest)
@@ -315,15 +314,15 @@ const Todos = () => {
                         >
                           Cancel
                         </button>
-                        <button className="btn btn-danger" onClick={() => remove(t._id)}>Delete</button>
+                        <button className="btn btn-danger rounded-xl" onClick={() => remove(t._id)}>Delete</button>
                       </>
                     )}
                   </>
                 ) : (
-                  <button className="btn" onClick={() => restore(t._id)}>Restore</button>
+                  <button className="btn rounded-xl" onClick={() => restore(t._id)}>Restore</button>
                 )}
               </div>
-              {!trash && <div className="progressbar"><span style={{ width: `${(t.progress && t.progress.length ? t.progress[t.progress.length-1].percent : 0)}%` }} /></div>}
+              {!trash && <div className="progressbar rounded-full overflow-hidden"><span style={{ width: `${(t.progress && t.progress.length ? t.progress[t.progress.length-1].percent : 0)}%` }} /></div>}
             </div>
           )})}
         </div>

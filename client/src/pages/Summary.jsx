@@ -31,15 +31,16 @@ const Summary = () => {
     api.get('/todos/monthly?limit=6').then(r => setMonthly(r.data.data)).catch(() => {})
   }, [])
 
-  const loadRange = async (f, t) => {
-    const startISO = new Date(f + 'T00:00:00').toISOString()
-    const endISO = new Date(t + 'T23:59:59').toISOString()
-    try {
-      const r = await api.get(`/todos?startDate=${encodeURIComponent(startISO)}&endDate=${encodeURIComponent(endISO)}&limit=500`)
-      setWeekItems(r.data.items || [])
-    } catch {}
-  }
-  useEffect(() => { loadRange(from, to) }, [from, to])
+  
+  useEffect(() => {
+    let cancelled = false
+    const startISO = new Date(from + 'T00:00:00').toISOString()
+    const endISO = new Date(to + 'T23:59:59').toISOString()
+    api.get(`/todos?startDate=${encodeURIComponent(startISO)}&endDate=${encodeURIComponent(endISO)}&limit=500`)
+      .then(r => { if (!cancelled) setWeekItems(r.data.items || []) })
+      .catch(() => {})
+    return () => { cancelled = true }
+  }, [from, to])
 
   const days = useMemo(() => {
     const start = new Date(from + 'T00:00:00')
@@ -61,12 +62,7 @@ const Summary = () => {
     return g
   }, [weekItems])
   const maxCount = useMemo(() => Math.max(1, ...days.map(d => (grouped[d.toISOString().slice(0,10)] || []).length)), [days, grouped])
-  useEffect(() => {
-    const first = days.find(d => (grouped[d.toISOString().slice(0,10)] || []).length > 0)
-    const k = first ? first.toISOString().slice(0,10) : null
-    setSelectedKey(k)
-    setHoverKey(k)
-  }, [from, to, weekItems.length])
+  
 
   const goOverdue = () => navigate('/todos?overdue=true')
   const goToday = () => {

@@ -11,7 +11,11 @@ const ProgressPage = () => {
     const r = await api.get(`/todos/${id}`)
     setTodo(r.data.todo)
   }
-  useEffect(() => { load() }, [id])
+  useEffect(() => {
+    let cancelled = false
+    api.get(`/todos/${id}`).then(r => { if (!cancelled) setTodo(r.data.todo) }).catch(() => {})
+    return () => { cancelled = true }
+  }, [id])
 
   const add = async () => {
     const p = Number(input.percent || 0)

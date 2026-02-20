@@ -28,12 +28,10 @@ api.interceptors.request.use((config) => {
   return config
 })
 
-let refreshing = null
 api.interceptors.response.use(
   (res) => res,
   async (err) => {
     const original = err.config
-    // Retry once on transient network changes in dev
     const isNetworkChange =
       err?.code === 'ERR_NETWORK' ||
       /Network\s*Error/i.test(err?.message || '') ||
@@ -52,7 +50,7 @@ api.interceptors.response.use(
           original.headers.Authorization = `Bearer ${r.data.accessToken}`
           return api(original)
         }
-      } catch (e) {}
+      } catch (e) { console.warn(e) }
     }
     return Promise.reject(err)
   }

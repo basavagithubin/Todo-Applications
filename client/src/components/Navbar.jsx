@@ -33,6 +33,9 @@ const Navbar = () => {
             <div className="menu">
               <button className="menu-item" onClick={() => { setOpen(false); navigate('/dashboard') }}>Dashboard</button>
               <button className="menu-item" onClick={() => { setOpen(false); navigate('/todos') }}>Todos</button>
+              {user?.role === 'superadmin' && (
+                <button className="menu-item" onClick={() => { setOpen(false); navigate('/admin') }}>Admin</button>
+              )}
               <div className="menu-sep" />
               <button className="menu-item danger" onClick={() => { setOpen(false); logout() }}>Logout</button>
             </div>

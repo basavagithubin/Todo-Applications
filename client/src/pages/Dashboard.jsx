@@ -1,245 +1,147 @@
 import { useEffect, useMemo, useState } from 'react'
 import api from '../services/api'
-import { useAuth } from '../context/AuthContext'
-import { toast } from 'react-hot-toast'
 import { Link } from 'react-router-dom'
-import { useTheme } from '../context/ThemeContext'
+
+const Ring = ({ value, color = 'var(--primary)' }) => {
+  const size = 56
+  const stroke = 6
+  const r = (size - stroke) / 2
+  const circ = 2 * Math.PI * r
+  const pct = Math.max(0, Math.min(100, value))
+  const dash = (pct / 100) * circ
+  return (
+    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+      <circle cx={size/2} cy={size/2} r={r} stroke="var(--border)" strokeWidth={stroke} fill="none" />
+      <circle cx={size/2} cy={size/2} r={r} stroke={color} strokeWidth={stroke} fill="none" strokeLinecap="round" strokeDasharray={`${dash} ${circ - dash}`} transform={`rotate(-90 ${size/2} ${size/2})`} />
+      <text x="50%" y="50%" dominantBaseline="middle" textAnchor="middle" fontSize="12" fill="var(--text)">{pct}%</text>
+    </svg>
+  )
+}
+
+const KPI = ({ title, value, delta, color, percent }) => (
+  <div className="bg-[var(--panel)] border border-[var(--border)] rounded-2xl p-4 shadow grid gap-2">
+    <div className="flex items-center justify-between">
+      <span className="text-[var(--muted)]">{title}</span>
+      <Ring value={typeof percent === 'number' ? Math.max(0, Math.min(100, percent)) : 75} color={color} />
+    </div>
+    <div className="text-2xl font-extrabold">{value}</div>
+    <div className="text-sm">
+      <span className="text-primary font-semibold">{delta}</span>
+      <span className="text-[var(--muted)] ml-1">this month</span>
+    </div>
+  </div>
+)
+
+const Bars = ({ data }) => {
+  const max = Math.max(1, ...data)
+  return (
+    <div className="h-64 grid items-end gap-6 grid-cols-4 px-2">
+      {data.map((v, i) => {
+        const h = Math.max(16, Math.round((v / max) * 220))
+        const colors = ['#8dd3e6', '#6366f1', '#22c55e', '#8b5cf6']
+        return <div key={i} className="w-16 mx-auto rounded-xl" style={{ height: h, background: colors[i % colors.length] }} />
+      })}
+    </div>
+  )
+}
 
 const Dashboard = () => {
-  const { user, logout } = useAuth()
-  const { theme, toggle: toggleTheme } = useTheme()
-  const [items, setItems] = useState([])
   const [stats, setStats] = useState(null)
   const [monthly, setMonthly] = useState([])
-  const [page, setPage] = useState(1)
-  const [pages, setPages] = useState(1)
-  const [loading, setLoading] = useState(false)
-  const [form, setForm] = useState({ title: '', priority: 'medium', dueDate: '', tags: '' })
-  const [filters, setFilters] = useState({ search: '', status: '', priority: '', sort: 'createdAt:desc' })
-  const [trash, setTrash] = useState(false)
-  const [selected, setSelected] = useState([])
-  const query = useMemo(() => {
-    const q = new URLSearchParams()
-    q.set('page', String(page))
-    if (filters.search) q.set('search', filters.search)
-    if (filters.status) q.set('status', filters.status)
-    if (filters.priority) q.set('priority', filters.priority)
-    if (filters.sort) q.set('sort', filters.sort)
-    return q.toString()
-  }, [page, filters])
-
-  const load = async () => {
-    setLoading(true)
-    try {
-      if (trash) {
-        const r = await api.get('/todos/trash')
-        setItems(r.data.items)
-        setPages(1)
-      } else {
-        const r = await api.get(`/todos?${query}`)
-        setItems(r.data.items)
-        setPages(r.data.pages)
-      }
-    } catch (e) {
-      toast.error('Failed to load todos')
-    } finally {
-      setLoading(false)
-    }
-  }
+  const [recent, setRecent] = useState([])
 
   useEffect(() => {
-    load()
-  }, [query, trash])
+    api.get('/todos/summary').then(r => setStats(r.data)).catch(() => {})
+    api.get('/todos/monthly?limit=4').then(r => setMonthly(r.data.data || [])).catch(() => {})
+    api.get('/todos?limit=5&sort=createdAt:desc').then(r => setRecent(r.data.items || [])).catch(() => {})
+  }, [])
 
-  useEffect(() => {
-    if (!trash) {
-      api.get('/todos/summary').then(r => setStats(r.data)).catch(() => {})
-      api.get('/todos/monthly?limit=6').then(r => setMonthly(r.data.data)).catch(() => {})
+  const barData = useMemo(() => {
+    const arr = monthly.map(m => m.total)
+    return arr.length ? arr.slice(-4) : [4, 8, 5, 9]
+  }, [monthly])
+  const growthDelta = useMemo(() => {
+    if (monthly.length >= 2) {
+      const a = monthly[monthly.length - 1].total || 0
+      const b = monthly[monthly.length - 2].total || 1
+      const g = Math.round(((a - b) / Math.max(1, b)) * 100)
+      return `${g >= 0 ? '+' : ''}${g}%`
     }
-  }, [trash, items.length])
-
-  const add = async () => {
-    if (!form.title) return
-    const payload = { title: form.title, priority: form.priority, dueDate: form.dueDate || undefined, tags: form.tags ? form.tags.split(',').map(t => t.trim()).filter(Boolean) : [] }
-    const optimistic = [{ ...payload, _id: Math.random().toString(), status: 'pending', createdAt: new Date().toISOString() }, ...items]
-    setItems(optimistic)
-    setForm({ title: '', priority: 'medium', dueDate: '', tags: '' })
-    try {
-      await api.post('/todos', payload)
-      load()
-    } catch (e) {
-      toast.error('Failed to create')
-      load()
-    }
-  }
-
-  const toggle = async (id, status) => {
-    const prev = items
-    setItems(items.map((t) => (t._id === id ? { ...t, status } : t)))
-    try {
-      await api.patch(`/todos/${id}/status`, { status })
-    } catch (e) {
-      setItems(prev)
-      toast.error('Failed to update')
-    }
-  }
-
-  const remove = async (id) => {
-    const prev = items
-    setItems(items.filter((t) => t._id !== id))
-    try {
-      await api.delete(`/todos/${id}`)
-    } catch (e) {
-      setItems(prev)
-      toast.error('Failed to delete')
-    }
-  }
-
-  const restore = async (id) => {
-    try {
-      await api.patch(`/todos/${id}/restore`)
-      load()
-    } catch (e) {
-      toast.error('Failed to restore')
-    }
-  }
-
-  const toggleSelect = (id, checked) => {
-    setSelected((cur) => checked ? [...new Set([...cur, id])] : cur.filter(x => x !== id))
-  }
-  const bulkDelete = async () => {
-    const ids = selected
-    setSelected([])
-    for (const id of ids) await remove(id)
-  }
-  const bulkComplete = async () => {
-    const ids = selected
-    setSelected([])
-    for (const id of ids) await toggle(id, 'completed')
-  }
-  const filterToday = () => {
-    const d = new Date()
-    const start = new Date(d.getFullYear(), d.getMonth(), d.getDate()).toISOString()
-    const end = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59, 999).toISOString()
-    setPage(1)
-    setFilters({ ...filters, startDate: start, endDate: end })
-  }
-  const filterOverdue = () => {
-    setPage(1)
-    setFilters({ ...filters, overdue: 'true' })
-  }
+    return '+0%'
+  }, [monthly])
+  const total = stats?.total || 0
+  const pctCompleted = total ? Math.round(((stats?.completed || 0) / total) * 100) : 0
+  const pctPending = total ? Math.round(((stats?.pending || 0) / total) * 100) : 0
+  const pctOverdue = total ? Math.round(((stats?.overdue || 0) / total) * 100) : 0
 
   return (
-    <div className="layout">
-      <aside className="sidebar">
-        <h3>Todos</h3>
-        <p>{user?.name}</p>
-        <button className="btn" onClick={logout}>Logout</button>
-        {user?.role === 'superadmin' && <Link className="btn" to="/admin">Admin</Link>}
-        <button className="btn" onClick={toggleTheme}>{theme === 'dark' ? 'Light Mode' : 'Dark Mode'}</button>
-      </aside>
-      <main className="content">
-        {!trash && stats && (
-          <>
-            <div className="grid">
-              <div className="card"><h3>Total</h3><strong>{stats.total}</strong></div>
-              <div className="card"><h3>Completed</h3><strong className="pill low">{stats.completed}</strong></div>
-              <div className="card"><h3>Pending</h3><strong className="pill medium">{stats.pending}</strong></div>
-              <div className="card"><h3>Overdue</h3><strong className="pill high">{stats.overdue}</strong></div>
-              <div className="card"><h3>Today</h3><strong className="pill date">{stats.dueToday}</strong></div>
-              <div className="card"><h3>Completion</h3><strong>{stats.completionRate}%</strong></div>
-            </div>
-            {!!monthly.length && (
-              <div className="card">
-                <h3>Last 6 Months</h3>
-                <div style={{display:'grid',gridTemplateColumns:`repeat(${monthly.length},1fr)`,gap:8,alignItems:'end',height:140}}>
-                  {monthly.map(m => {
-                    const max = Math.max(...monthly.map(x=>x.total)) || 1
-                    const h = Math.max(6, Math.round((m.total/max)*120))
-                    return (
-                      <div key={m._id} style={{display:'grid',gap:6,justifyItems:'center'}}>
-                        <div style={{width:16,height:h,background:'var(--primary)',borderRadius:6}} title={`${m._id} • ${m.total}`}/>
-                        <small className="subtitle">{m._id.slice(5)}</small>
-                      </div>
-                    )
-                  })}
-                </div>
-              </div>
-            )}
-          </>
-        )}
-        <div className="toolbar">
-          <input className="input" placeholder="Search" value={filters.search} onChange={(e) => { setPage(1); setFilters({ ...filters, search: e.target.value }) }} />
-          <select className="input" value={filters.status} onChange={(e) => { setPage(1); setFilters({ ...filters, status: e.target.value }) }}>
-            <option value="">All</option>
-            <option value="pending">Pending</option>
-            <option value="completed">Completed</option>
-          </select>
-          <select className="input" value={filters.priority} onChange={(e) => { setPage(1); setFilters({ ...filters, priority: e.target.value }) }}>
-            <option value="">Any priority</option>
-            <option value="low">Low</option>
-            <option value="medium">Medium</option>
-            <option value="high">High</option>
-          </select>
-          <select className="input" value={filters.sort} onChange={(e) => { setPage(1); setFilters({ ...filters, sort: e.target.value }) }}>
-            <option value="createdAt:desc">Newest</option>
-            <option value="createdAt:asc">Oldest</option>
-            <option value="priority:asc">Priority A-Z</option>
-            <option value="title:asc">Title A-Z</option>
-          </select>
-          <button className="btn" onClick={() => { setFilters({ search:'', status:'', priority:'', sort:'createdAt:desc' }); setPage(1); }}>Clear</button>
-          <button className="btn" onClick={() => setTrash(!trash)}>{trash ? 'Back to List' : 'Open Trash'}</button>
-          <button className="btn" onClick={filterOverdue}>Overdue</button>
-          <button className="btn" onClick={filterToday}>Due Today</button>
+    <div className="max-w-[1200px] mx-auto p-4 grid gap-4">
+      <div className="flex items-center gap-3">
+        <div className="text-2xl font-extrabold">Dashboard</div>
+        <div className="ml-auto flex items-center gap-3 w-full max-w-[420px]">
+          <input className="w-full rounded-xl px-3 py-2 bg-[var(--panel)] border border-[var(--border)] outline-none" placeholder="Search..." />
+          <div className="w-9 h-9 rounded-full bg-[var(--border)]" />
         </div>
-        {!!selected.length && !trash && (
-          <div className="toolbar">
-            <span className="subtitle">{selected.length} selected</span>
-            <button className="btn" onClick={bulkComplete}>Mark Completed</button>
-            <button className="btn" onClick={bulkDelete}>Delete</button>
-            <button className="btn" onClick={() => setSelected([])}>Clear</button>
+      </div>
+
+      <div className="grid grid-cols-4 gap-4 md:grid-cols-2 sm:grid-cols-1">
+        <KPI title="Sales" value={stats?.completed ?? '—'} delta={growthDelta} color="#22c55e" percent={pctCompleted} />
+        <KPI title="Orders" value={stats?.pending ?? '—'} delta={growthDelta} color="#10b981" percent={pctPending} />
+        <KPI title="Invoices" value={stats?.total ?? '—'} delta={growthDelta} color="#3b82f6" percent={Math.min(100, (barData.slice(-1)[0] || 0) * 10)} />
+        <KPI title="Payments" value={stats?.overdue ?? '—'} delta={growthDelta} color="#8b5cf6" percent={pctOverdue} />
+      </div>
+
+      <div className="flex items-center gap-2">
+        <Link to="/todos" className="px-3 py-1.5 rounded-full bg-[var(--panel)] border border-[var(--border)]">All</Link>
+        <Link to="/todos?status=pending" className="px-3 py-1.5 rounded-full bg-[rgba(245,158,11,.15)] border border-[rgba(245,158,11,.25)]">Pending</Link>
+        <Link to="/todos?status=completed" className="px-3 py-1.5 rounded-full bg-[rgba(34,197,94,.15)] border border-[rgba(34,197,94,.25)]">Completed</Link>
+        <Link to="/todos?overdue=true" className="px-3 py-1.5 rounded-full bg-[rgba(239,68,68,.15)] border border-[rgba(239,68,68,.25)]">Overdue</Link>
+        <Link to="/todos?today=true" className="px-3 py-1.5 rounded-full bg-[var(--panel)] border border-[var(--border)]">Today</Link>
+      </div>
+
+      <div className="grid grid-cols-3 gap-4 md:grid-cols-1">
+        <div className="col-span-2 bg-[var(--panel)] border border-[var(--border)] rounded-2xl p-5 shadow grid gap-4">
+          <div className="flex items-center justify-between">
+            <h3 className="font-semibold">Sales</h3>
+            <Link className="text-primary" to="/todos">View All</Link>
           </div>
-        )}
-        <div className="new">
-          <input className="input" placeholder="New todo title" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
-          <input className="input" type="date" value={form.dueDate} onChange={(e) => setForm({ ...form, dueDate: e.target.value })} />
-          <input className="input" placeholder="tags, comma,separated" value={form.tags} onChange={(e) => setForm({ ...form, tags: e.target.value })} />
-          <select className="input" value={form.priority} onChange={(e) => setForm({ ...form, priority: e.target.value })}>
-            <option value="low">Low</option>
-            <option value="medium">Medium</option>
-            <option value="high">High</option>
-          </select>
-          <button className="btn btn-primary" onClick={add}>Add</button>
+          <Bars data={barData} />
+          <div className="grid grid-cols-4 text-center text-[var(--muted)] text-sm">
+            <span>Sales</span><span>Visits</span><span>Income</span><span>Revenue</span>
+          </div>
         </div>
-        {loading ? <div className="skeleton" /> : (
-          <ul className="list">
-            {items.map((t) => (
-              <li key={t._id} className={`item ${t.status}`}>
-                <div className="title">
-                  {!trash && <input type="checkbox" checked={selected.includes(t._id)} onChange={(e) => toggleSelect(t._id, e.target.checked)} />}
-                  <input type="checkbox" checked={t.status === 'completed'} onChange={(e) => toggle(t._id, e.target.checked ? 'completed' : 'pending')} />
-                  <span>{t.title}</span>
-                  <small className={`pill ${t.priority}`}>{t.priority}</small>
-                  {t.dueDate && <small className="pill date">{new Date(t.dueDate).toLocaleDateString()}</small>}
-                  {Array.isArray(t.tags) && t.tags.map((tag, i) => <span key={i} className="tag">{tag}</span>)}
-                </div>
-                <div className="actions">
-                  {trash ? (
-                    <button className="btn" onClick={() => restore(t._id)}>Restore</button>
-                  ) : (
-                    <button className="btn" onClick={() => remove(t._id)}>Delete</button>
-                  )}
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
-        <div className="pagination">
-          <button className="btn" disabled={page <= 1 || trash} onClick={() => setPage(page - 1)}>Prev</button>
-          <span>{page}/{pages}</span>
-          <button className="btn" disabled={page >= pages || trash} onClick={() => setPage(page + 1)}>Next</button>
+        <div className="grid gap-4">
+          <div className="bg-[var(--panel)] border border-[var(--border)] rounded-2xl p-4 shadow grid gap-3">
+            <div className="flex items-center justify-between">
+              <h3 className="font-semibold">Transactions</h3>
+              <Link className="text-primary" to="/todos">View All</Link>
+            </div>
+            <ul className="grid gap-3">
+              {recent.map(t => (
+                <li key={t._id} className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="w-8 h-8 rounded-full bg-[var(--border)]" />
+                    <div className="truncate max-w-[180px]">{t.title}</div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className={`px-2 py-0.5 rounded-full text-xs border ${t.status==='completed'?'bg-[rgba(34,197,94,.15)] border-[rgba(34,197,94,.25)]':'bg-[rgba(245,158,11,.15)] border-[rgba(245,158,11,.25)]'}`}>{t.status}</span>
+                    <small className="text-[var(--muted)]">{new Date(t.createdAt).toLocaleDateString()}</small>
+                  </div>
+                </li>
+              ))}
+              {!recent.length && <li className="text-[var(--muted)]">No recent activity</li>}
+            </ul>
+          </div>
+          <div className="bg-gradient-to-br from-[#1f7a68] to-[#2dbb95] rounded-2xl p-6 text-white grid gap-2">
+            <div className="text-2xl font-extrabold">Design Smarter</div>
+            <div className="opacity-90">Faster. Make things Better</div>
+            <div className="flex gap-2 mt-2">
+              <Link to="/todos" className="bg-white/20 hover:bg-white/30 rounded-xl px-4 py-2">View All</Link>
+              <Link to="/todos" className="bg-white text-black rounded-xl px-4 py-2">Order Now</Link>
+            </div>
+          </div>
         </div>
-      </main>
+      </div>
     </div>
   )
 }
