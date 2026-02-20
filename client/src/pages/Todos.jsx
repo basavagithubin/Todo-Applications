@@ -168,7 +168,7 @@ const Todos = () => {
         </div>
       )}
       <div className="new">
-        <input className="input" placeholder="New todo title" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
+        <input id="new-title" className="input" placeholder="New todo title" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
         <input className="input" type="date" value={form.startDate} onChange={(e) => setForm({ ...form, startDate: e.target.value })} />
         <input className="input" placeholder="tags, comma,separated" value={form.tags} onChange={(e) => setForm({ ...form, tags: e.target.value })} />
         <select className="input" value={form.priority} onChange={(e) => setForm({ ...form, priority: e.target.value })}>
@@ -325,9 +325,21 @@ const Todos = () => {
               {!trash && <div className="progressbar rounded-full overflow-hidden"><span style={{ width: `${(t.progress && t.progress.length ? t.progress[t.progress.length-1].percent : 0)}%` }} /></div>}
             </div>
           )})}
+          {!trash && (
+            <button
+              key="add-card"
+              onClick={() => {
+                const el = document.getElementById('new-title')
+                if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'center' }); el.focus() }
+              }}
+              className="rounded-2xl border border-dashed border-[var(--border)] bg-transparent hover:border-primary hover:text-primary transition-colors p-4 h-full flex items-center justify-center"
+            >
+              <span className="text-lg">+ Add New</span>
+            </button>
+          )}
         </div>
       )}
-      <div className="pagination">
+      <div className="pagination flex items-center justify-center gap-3 mt-2">
         <button className="btn" disabled={page <= 1 || trash} onClick={() => setPage(page - 1)}>Prev</button>
         <span>{page}/{pages}</span>
         <button className="btn" disabled={page >= pages || trash} onClick={() => setPage(page + 1)}>Next</button>
