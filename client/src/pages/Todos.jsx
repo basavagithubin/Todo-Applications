@@ -190,17 +190,14 @@ const Todos = () => {
         <button className="btn btn-primary" onClick={add}>Add</button>
       </div>
       {loading ? <div className="skeleton" /> : (
-        <div
-          className="grid grid-cols-4 gap-5 md:grid-cols-2 sm:grid-cols-1"
-          style={{ gridAutoRows: '1fr', gridTemplateRows: `repeat(${rows}, minmax(0, 1fr))` }}
-        >
+        <div className="grid grid-cols-4 gap-5 md:grid-cols-2 sm:grid-cols-1">
           {items.map((t) => {
             const isEditing = !!edits[t._id]
             const edit = edits[t._id] || {}
             return (
             <div
               key={t._id}
-              className="todo-card rounded-2xl border border-[var(--border)] bg-[var(--panel)] shadow p-4 h-full flex flex-col"
+              className="todo-card rounded-2xl border border-[var(--border)] bg-[var(--panel)] shadow p-4 flex flex-col"
             >
               <div className="todo-head">
                 <div className="todo-title">
