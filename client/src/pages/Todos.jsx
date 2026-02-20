@@ -29,7 +29,7 @@ const Todos = () => {
   const query = useMemo(() => {
     const q = new URLSearchParams()
     q.set('page', String(page))
-    q.set('limit', String(rows * 4))
+    q.set('limit', String(rows * 5))
     if (filters.search) q.set('search', filters.search)
     if (filters.status) q.set('status', filters.status)
     if (filters.priority) q.set('priority', filters.priority)
@@ -190,33 +190,40 @@ const Todos = () => {
         <button className="btn btn-primary" onClick={add}>Add</button>
       </div>
       {loading ? <div className="skeleton" /> : (
-        <div className="grid grid-cols-4 gap-5 md:grid-cols-2 sm:grid-cols-1">
+        <div className="grid grid-cols-4 gap-6 md:grid-cols-2 sm:grid-cols-1">
           {items.map((t) => {
             const isEditing = !!edits[t._id]
             const edit = edits[t._id] || {}
             return (
             <div
               key={t._id}
-              className="todo-card rounded-2xl border border-[var(--border)] bg-[var(--panel)] shadow p-4 flex flex-col"
+              className="group relative flex flex-col bg-[var(--panel)] rounded-3xl p-5 border border-[var(--border)] shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
             >
-              <div className="todo-head">
-                <div className="todo-title">
-                  {!trash && <input type="checkbox" checked={selected.includes(t._id)} onChange={(e) => toggleSelect(t._id, e.target.checked)} />}
-                  {!isEditing ? (
-                    <h4 className="text-lg font-semibold" title={t.title}>{t.title}</h4>
-                  ) : (
-                    <input
-                      className="input small rounded-xl"
-                      placeholder="Title"
-                      value={edit.title}
-                      onChange={(e) => setEdits({ ...edits, [t._id]: { ...edit, title: e.target.value } })}
-                    />
+              <div className="flex items-start justify-between mb-3">
+                <div className="flex items-center gap-3">
+                  {!trash && (
+                    <div className="relative">
+                      <input 
+                        type="checkbox" 
+                        checked={selected.includes(t._id)} 
+                        onChange={(e) => toggleSelect(t._id, e.target.checked)} 
+                        className="w-5 h-5 rounded-md border-gray-300 text-blue-600 focus:ring-blue-500 transition-colors cursor-pointer"
+                      />
+                    </div>
                   )}
+                  <span className={`px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${
+                    t.priority === 'high' ? 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400' :
+                    t.priority === 'medium' ? 'bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400' :
+                    'bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400'
+                  }`}>
+                    {t.priority}
+                  </span>
                 </div>
-                <div className="todo-head-actions">
-                  {!trash && !isEditing && (
+                
+                <div className="flex items-center gap-2">
+                   {!trash && !isEditing && (
                     <button
-                      className="btn btn-ghost btn-small rounded-xl"
+                      className="p-1.5 text-gray-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
                       onClick={() =>
                         setEdits({
                           ...edits,
@@ -228,76 +235,122 @@ const Todos = () => {
                           }
                         })
                       }
+                      title="Edit"
                     >
-                      Edit
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
                     </button>
                   )}
-                  <span
-                    className={`badge clickable ${t.status === 'completed' ? 'badge-success' : 'badge-warning'}`}
-                    title="Click to toggle status"
+                  <button
+                    className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${
+                      t.status === 'completed' 
+                        ? 'bg-green-50 text-green-600 border-green-200 dark:bg-green-900/20 dark:border-green-800' 
+                        : 'bg-yellow-50 text-yellow-600 border-yellow-200 dark:bg-yellow-900/20 dark:border-yellow-800'
+                    }`}
                     onClick={() => toggle(t._id, t.status === 'completed' ? 'pending' : 'completed')}
                   >
                     {t.status}
-                  </span>
+                  </button>
                 </div>
               </div>
-              <div className="todo-meta">
-                <span className={`pill ${t.priority}`}>{t.priority}</span>
-                <span className="pill date" title="Start">
-                  {new Date(t.startDate || t.createdAt).toLocaleDateString()}
-                </span>
-                {t.completedAt && <span className="pill date" title="Completed">{new Date(t.completedAt).toLocaleDateString()}</span>}
-              </div>
-              {!isEditing ? (
-                !!(t.tags && t.tags.length) && <div className="tags">{t.tags.map((tag, i) => <span key={i} className="tag rounded-full">{tag}</span>)}</div>
-              ) : (
-                <input
-                  className="input small rounded-xl"
-                  placeholder="tags, comma,separated"
-                  value={edit.tags || ''}
-                  onChange={(e) => setEdits({ ...edits, [t._id]: { ...edit, tags: e.target.value } })}
-                />
-              )}
-              <div className="todo-controls mt-auto">
-                {!trash && (
-                  <>
-                    {!isEditing ? (
-                      <>
-                        <select className="input small rounded-xl" value={t.priority} onChange={(e) => api.put(`/todos/${t._id}`, { priority: e.target.value }).then(load)}>
-                          <option value="low">Low</option>
-                          <option value="medium">Medium</option>
-                          <option value="high">High</option>
-                        </select>
-                        <input className="input small rounded-xl" type="date" value={(t.startDate ? new Date(t.startDate) : new Date(t.createdAt)).toISOString().slice(0,10)} onChange={(e) => api.put(`/todos/${t._id}`, { startDate: new Date(e.target.value) }).then(load)} />
-                      </>
-                    ) : (
-                      <>
-                        <select className="input small rounded-xl" value={edit.priority} onChange={(e) => setEdits({ ...edits, [t._id]: { ...edit, priority: e.target.value } })}>
-                          <option value="low">Low</option>
-                          <option value="medium">Medium</option>
-                          <option value="high">High</option>
-                        </select>
-                        <input className="input small rounded-xl" type="date" value={edit.startDate} onChange={(e) => setEdits({ ...edits, [t._id]: { ...edit, startDate: e.target.value } })} />
-                      </>
-                    )}
-                  </>
+
+              <div className="mb-4 flex-1">
+                {!isEditing ? (
+                  <h4 className="text-xl font-bold text-[var(--text)] leading-tight mb-2 line-clamp-2" title={t.title}>
+                    {t.title}
+                  </h4>
+                ) : (
+                  <input
+                    className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-xl px-3 py-2 text-lg font-bold outline-none focus:ring-2 focus:ring-blue-500/50 mb-2"
+                    placeholder="Task title"
+                    value={edit.title}
+                    onChange={(e) => setEdits({ ...edits, [t._id]: { ...edit, title: e.target.value } })}
+                    autoFocus
+                  />
                 )}
+
+                <div className="flex flex-wrap gap-2 mt-3">
+                   {!isEditing ? (
+                    (t.tags || []).map((tag, i) => (
+                      <span key={i} className="px-2 py-1 bg-[var(--bg)] border border-[var(--border)] rounded-md text-xs text-[var(--muted)]">
+                        #{tag}
+                      </span>
+                    ))
+                  ) : (
+                    <input
+                      className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-lg px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-blue-500/50"
+                      placeholder="Tags (comma separated)"
+                      value={edit.tags || ''}
+                      onChange={(e) => setEdits({ ...edits, [t._id]: { ...edit, tags: e.target.value } })}
+                    />
+                  )}
+                </div>
               </div>
-              <div className="todo-actions-row">
-                {!trash ? (
-                  <>
-                    {!isEditing ? (
+
+              <div className="border-t border-[var(--border)] pt-4 mt-auto">
+                 {!trash && !isEditing ? (
+                   <div className="flex items-center justify-between text-sm text-[var(--muted)] mb-4">
+                      <div className="flex items-center gap-1.5">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                        <span>{new Date(t.startDate || t.createdAt).toLocaleDateString(undefined, { month:'short', day:'numeric' })}</span>
+                      </div>
+                      {t.completedAt && (
+                         <div className="flex items-center gap-1.5 text-green-600 dark:text-green-400">
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
+                          <span>Done {new Date(t.completedAt).toLocaleDateString(undefined, { month:'short', day:'numeric' })}</span>
+                        </div>
+                      )}
+                   </div>
+                 ) : !trash && (
+                   <div className="flex gap-2 mb-4">
+                      <select 
+                        className="bg-[var(--bg)] border border-[var(--border)] rounded-lg px-2 py-1 text-sm outline-none"
+                        value={edit.priority} 
+                        onChange={(e) => setEdits({ ...edits, [t._id]: { ...edit, priority: e.target.value } })}
+                      >
+                        <option value="low">Low</option>
+                        <option value="medium">Medium</option>
+                        <option value="high">High</option>
+                      </select>
+                      <input 
+                        type="date" 
+                        className="bg-[var(--bg)] border border-[var(--border)] rounded-lg px-2 py-1 text-sm outline-none"
+                        value={edit.startDate} 
+                        onChange={(e) => setEdits({ ...edits, [t._id]: { ...edit, startDate: e.target.value } })} 
+                      />
+                   </div>
+                 )}
+
+                <div className="grid grid-cols-3 gap-2">
+                  {!trash ? (
+                    !isEditing ? (
                       <>
-                        <button className="btn btn-success rounded-xl" onClick={() => toggle(t._id, t.status === 'completed' ? 'pending' : 'completed')}>
-                          {t.status === 'completed' ? 'Mark Pending' : 'Complete'}
+                        <button 
+                          className={`col-span-1 py-2 rounded-xl text-sm font-semibold transition-all ${
+                            t.status === 'completed'
+                            ? 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300'
+                            : 'bg-green-500 text-white hover:bg-green-600 shadow-lg shadow-green-500/30'
+                          }`}
+                          onClick={() => toggle(t._id, t.status === 'completed' ? 'pending' : 'completed')}
+                        >
+                          {t.status === 'completed' ? 'Undo' : 'Done'}
                         </button>
-                        <button className="btn rounded-xl" onClick={() => navigate(`/todos/${t._id}/progress`)}>Progress</button>
-                        <button className="btn btn-danger rounded-xl" onClick={() => remove(t._id)}>Delete</button>
+                        <button 
+                          className="col-span-1 py-2 bg-[var(--bg)] border border-[var(--border)] text-[var(--text)] rounded-xl text-sm font-semibold hover:bg-[var(--border)] transition-all"
+                          onClick={() => navigate(`/todos/${t._id}/progress`)}
+                        >
+                          Details
+                        </button>
+                        <button 
+                          className="col-span-1 py-2 bg-red-50 text-red-600 border border-red-100 rounded-xl text-sm font-semibold hover:bg-red-100 dark:bg-red-900/20 dark:border-red-900/50 dark:text-red-400 transition-all"
+                          onClick={() => remove(t._id)}
+                        >
+                          Delete
+                        </button>
                       </>
                     ) : (
                       <>
                         <button
-                          className="btn btn-success rounded-xl"
+                          className="col-span-1 py-2 bg-blue-500 text-white rounded-xl text-sm font-semibold hover:bg-blue-600 shadow-lg shadow-blue-500/30"
                           onClick={async () => {
                             const payload = {
                               title: (edit.title || '').trim(),
@@ -313,7 +366,7 @@ const Todos = () => {
                           Save
                         </button>
                         <button
-                          className="btn rounded-xl"
+                          className="col-span-1 py-2 bg-[var(--bg)] border border-[var(--border)] text-[var(--text)] rounded-xl text-sm font-semibold hover:bg-[var(--border)]"
                           onClick={() => {
                             const { [t._id]: _, ...rest } = edits
                             setEdits(rest)
@@ -321,15 +374,33 @@ const Todos = () => {
                         >
                           Cancel
                         </button>
-                        <button className="btn btn-danger rounded-xl" onClick={() => remove(t._id)}>Delete</button>
+                         <button 
+                          className="col-span-1 py-2 bg-red-50 text-red-600 border border-red-100 rounded-xl text-sm font-semibold hover:bg-red-100 dark:bg-red-900/20 dark:border-red-900/50 dark:text-red-400"
+                          onClick={() => remove(t._id)}
+                        >
+                          Delete
+                        </button>
                       </>
-                    )}
-                  </>
-                ) : (
-                  <button className="btn rounded-xl" onClick={() => restore(t._id)}>Restore</button>
-                )}
+                    )
+                  ) : (
+                     <button className="col-span-3 py-2 bg-blue-50 text-blue-600 rounded-xl text-sm font-semibold hover:bg-blue-100" onClick={() => restore(t._id)}>Restore Task</button>
+                  )}
+                </div>
               </div>
-              {!trash && <div className="progressbar rounded-full overflow-hidden"><span style={{ width: `${(t.progress && t.progress.length ? t.progress[t.progress.length-1].percent : 0)}%` }} /></div>}
+              {!trash && t.progress && t.progress.length > 0 && (
+                <div className="mt-4 pt-2">
+                  <div className="flex justify-between text-xs text-[var(--muted)] mb-1">
+                    <span>Progress</span>
+                    <span>{t.progress[t.progress.length-1].percent}%</span>
+                  </div>
+                  <div className="h-1.5 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-gradient-to-r from-blue-400 to-indigo-500 rounded-full" 
+                      style={{ width: `${t.progress[t.progress.length-1].percent}%` }} 
+                    />
+                  </div>
+                </div>
+              )}
             </div>
           )})}
         </div>

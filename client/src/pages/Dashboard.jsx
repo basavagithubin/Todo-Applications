@@ -118,18 +118,34 @@ const Dashboard = () => {
             </div>
             <ul className="grid gap-3">
               {recent.map(t => (
-                <li key={t._id} className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="w-8 h-8 rounded-full bg-[var(--border)]" />
-                    <div className="truncate max-w-[180px]">{t.title}</div>
+                <li key={t._id} className="flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors group cursor-default">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center text-lg ${
+                      t.priority === 'high' ? 'bg-red-100 text-red-600 dark:bg-red-900/30' :
+                      t.priority === 'medium' ? 'bg-orange-100 text-orange-600 dark:bg-orange-900/30' :
+                      'bg-blue-100 text-blue-600 dark:bg-blue-900/30'
+                    }`}>
+                      {t.priority === 'high' ? '!' : t.priority === 'medium' ? '•' : '✓'}
+                    </div>
+                    <div>
+                      <div className="font-semibold text-gray-800 dark:text-gray-200 truncate max-w-[180px] group-hover:text-blue-600 transition-colors">{t.title}</div>
+                      <div className="text-xs text-[var(--muted)] flex items-center gap-1">
+                         <span>{new Date(t.createdAt).toLocaleDateString(undefined, { month:'short', day:'numeric' })}</span>
+                      </div>
+                    </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className={`px-2 py-0.5 rounded-full text-xs border ${t.status==='completed'?'bg-[rgba(34,197,94,.15)] border-[rgba(34,197,94,.25)]':'bg-[rgba(245,158,11,.15)] border-[rgba(245,158,11,.25)]'}`}>{t.status}</span>
-                    <small className="text-[var(--muted)]">{new Date(t.createdAt).toLocaleDateString()}</small>
+                    <span className={`px-2.5 py-1 rounded-full text-xs font-medium border ${
+                      t.status === 'completed' 
+                        ? 'bg-green-50 text-green-600 border-green-200 dark:bg-green-900/20 dark:border-green-800' 
+                        : 'bg-yellow-50 text-yellow-600 border-yellow-200 dark:bg-yellow-900/20 dark:border-yellow-800'
+                    }`}>
+                      {t.status}
+                    </span>
                   </div>
                 </li>
               ))}
-              {!recent.length && <li className="text-[var(--muted)]">No recent activity</li>}
+              {!recent.length && <li className="text-[var(--muted)] text-center py-4">No recent activity</li>}
             </ul>
           </div>
           <div className="bg-gradient-to-br from-[#1f7a68] to-[#2dbb95] rounded-2xl p-6 text-white grid gap-2">
