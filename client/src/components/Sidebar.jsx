@@ -31,14 +31,14 @@ const Sidebar = () => {
         </Link>
       </div>
 
-      <nav className="flex-1 px-4 space-y-1">
+      <nav className="flex-1 px-4 space-y-2">
         {links.map(link => {
           const active = location.pathname.startsWith(link.to)
           return (
             <Link
               key={link.to}
               to={link.to}
-              className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 group relative overflow-hidden ${
+              className={`flex items-center gap-3 px-4 py-3 min-h-[48px] rounded-xl transition-all duration-300 group relative overflow-hidden ${
                 active 
                   ? 'bg-gradient-to-r from-primary-500/15 to-transparent text-primary-600 dark:text-primary-400 font-bold shadow-sm' 
                   : 'text-[var(--muted)] hover:bg-gray-50/50 hover:text-[var(--text)] dark:hover:bg-gray-800/50 hover:pl-6'

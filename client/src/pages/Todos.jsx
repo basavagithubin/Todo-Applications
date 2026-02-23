@@ -168,23 +168,46 @@ const Todos = () => {
         </div>
       )}
 
-      <div className="flex flex-wrap gap-4 items-center justify-between glass-panel p-4 rounded-2xl">
-        <div className="flex-1 min-w-[250px] relative">
-          <svg className="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-[var(--muted)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
-          <input className="input pl-10" placeholder="Search tasks..." value={filters.search} onChange={(e) => { setPage(1); setFilters({ ...filters, search: e.target.value }) }} />
+      <div className="flex flex-col xl:flex-row gap-6 items-start xl:items-center justify-between glass-panel p-6 rounded-3xl">
+        <div className="flex-1 w-full xl:max-w-md relative">
+          <div className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--muted)]">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+          </div>
+          <input 
+            className="input h-12 pl-12 text-base shadow-sm" 
+            placeholder="Search tasks..." 
+            value={filters.search} 
+            onChange={(e) => { setPage(1); setFilters({ ...filters, search: e.target.value }) }} 
+          />
         </div>
-        <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
-          <button className="btn btn-ghost border border-[var(--border)]" onClick={() => { setFilters({ search:'', status: trash ? filters.status : (tab === 'all' ? '' : tab), priority:'', sort:'createdAt:desc', startDate:'', endDate:'', overdue:'' }); setPage(1); }}>
+        
+        <div className="flex flex-wrap items-center gap-3 w-full xl:w-auto overflow-x-auto pb-2 xl:pb-0 no-scrollbar">
+          <button 
+            className="btn btn-ghost h-12 border border-[var(--border)] px-4 whitespace-nowrap hover:bg-gray-50 dark:hover:bg-gray-800" 
+            onClick={() => { setFilters({ search:'', status: trash ? filters.status : (tab === 'all' ? '' : tab), priority:'', sort:'createdAt:desc', startDate:'', endDate:'', overdue:'' }); setPage(1); }}
+          >
             Clear Filters
           </button>
-          <button className={`btn ${trash ? 'btn-primary' : 'btn-ghost border border-[var(--border)]'}`} onClick={() => setTrash(!trash)}>
+          <button 
+            className={`btn h-12 px-6 whitespace-nowrap ${trash ? 'btn-primary' : 'btn-ghost border border-[var(--border)] hover:bg-gray-50 dark:hover:bg-gray-800'}`} 
+            onClick={() => setTrash(!trash)}
+          >
             {trash ? 'Back to List' : 'Open Trash'}
           </button>
           {!trash && (
             <>
-              <button className="btn btn-ghost border border-[var(--border)] text-orange-500 hover:bg-orange-50 dark:hover:bg-orange-900/20" onClick={filterOverdue}>Overdue</button>
-              <button className="btn btn-ghost border border-[var(--border)] text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20" onClick={filterToday}>Due Today</button>
-              <select className="input w-32 py-2" value={rows} onChange={(e) => { setPage(1); setRows(Number(e.target.value)) }}>
+              <button className="btn btn-ghost h-12 border border-[var(--border)] text-orange-500 hover:bg-orange-50 dark:hover:bg-orange-900/20 whitespace-nowrap px-4" onClick={filterOverdue}>
+                Overdue
+              </button>
+              <button className="btn btn-ghost h-12 border border-[var(--border)] text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 whitespace-nowrap px-4" onClick={filterToday}>
+                Due Today
+              </button>
+              <div className="h-8 w-px bg-gray-200 dark:bg-gray-700 mx-2 hidden xl:block" />
+              <select 
+                className="input h-12 w-32 py-0 pl-4 pr-8 cursor-pointer shadow-sm" 
+                value={rows} 
+                onChange={(e) => { setPage(1); setRows(Number(e.target.value)) }}
+              >
                 <option value={2}>2 rows</option>
                 <option value={3}>3 rows</option>
                 <option value={4}>4 rows</option>
@@ -206,38 +229,69 @@ const Todos = () => {
         </div>
       )}
 
-      <div className="bg-[var(--glass-bg)] backdrop-blur-md border border-[var(--glass-border)] rounded-2xl p-6 shadow-lg flex flex-wrap gap-4 items-end transition-all duration-300 hover:shadow-glow-primary/20">
-        <div className="flex-1 min-w-[200px]">
-          <label className="text-xs font-semibold text-[var(--muted)] ml-1 mb-1 block">Task Title</label>
-          <input id="new-title" className="input" placeholder="What needs to be done?" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
+      <div className="bg-[var(--glass-bg)] backdrop-blur-md border border-[var(--glass-border)] rounded-3xl p-8 shadow-lg transition-all duration-300 hover:shadow-glow-primary/20">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-6 items-end">
+          <div className="md:col-span-2 lg:col-span-4">
+            <label className="text-xs font-bold text-[var(--muted)] ml-1 mb-2 block uppercase tracking-wide">Task Title</label>
+            <input 
+              id="new-title" 
+              className="input h-12 text-base" 
+              placeholder="What needs to be done?" 
+              value={form.title} 
+              onChange={(e) => setForm({ ...form, title: e.target.value })} 
+            />
+          </div>
+          <div className="lg:col-span-2">
+            <label className="text-xs font-bold text-[var(--muted)] ml-1 mb-2 block uppercase tracking-wide">Due Date</label>
+            <input 
+              className="input h-12" 
+              type="date" 
+              value={form.startDate} 
+              onChange={(e) => setForm({ ...form, startDate: e.target.value })} 
+            />
+          </div>
+          <div className="lg:col-span-2">
+            <label className="text-xs font-bold text-[var(--muted)] ml-1 mb-2 block uppercase tracking-wide">Tags</label>
+            <input 
+              className="input h-12" 
+              placeholder="e.g. work" 
+              value={form.tags} 
+              onChange={(e) => setForm({ ...form, tags: e.target.value })} 
+            />
+          </div>
+          <div className="lg:col-span-2">
+            <label className="text-xs font-bold text-[var(--muted)] ml-1 mb-2 block uppercase tracking-wide">Priority</label>
+            <select 
+              className="input h-12 py-0" 
+              value={form.priority} 
+              onChange={(e) => setForm({ ...form, priority: e.target.value })}
+            >
+              <option value="low">Low</option>
+              <option value="medium">Medium</option>
+              <option value="high">High</option>
+            </select>
+          </div>
+          <div className="lg:col-span-2">
+            <label className="text-xs font-bold text-[var(--muted)] ml-1 mb-2 block uppercase tracking-wide">Status</label>
+            <select 
+              className="input h-12 py-0" 
+              value={form.status || 'pending'} 
+              onChange={(e) => setForm({ ...form, status: e.target.value })}
+            >
+              <option value="pending">Pending</option>
+              <option value="completed">Completed</option>
+            </select>
+          </div>
+          <div className="md:col-span-2 lg:col-span-12">
+            <button 
+              className="btn btn-primary w-full md:w-auto px-8 h-12 text-base font-bold shadow-glow-primary hover:scale-105 active:scale-95" 
+              onClick={add}
+            >
+              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
+              Add Task
+            </button>
+          </div>
         </div>
-        <div className="w-auto">
-          <label className="text-xs font-semibold text-[var(--muted)] ml-1 mb-1 block">Due Date</label>
-          <input className="input" type="date" value={form.startDate} onChange={(e) => setForm({ ...form, startDate: e.target.value })} />
-        </div>
-        <div className="flex-1 min-w-[150px]">
-          <label className="text-xs font-semibold text-[var(--muted)] ml-1 mb-1 block">Tags</label>
-          <input className="input" placeholder="e.g. work, design" value={form.tags} onChange={(e) => setForm({ ...form, tags: e.target.value })} />
-        </div>
-        <div className="w-32">
-          <label className="text-xs font-semibold text-[var(--muted)] ml-1 mb-1 block">Priority</label>
-          <select className="input" value={form.priority} onChange={(e) => setForm({ ...form, priority: e.target.value })}>
-            <option value="low">Low</option>
-            <option value="medium">Medium</option>
-            <option value="high">High</option>
-          </select>
-        </div>
-        <div className="w-32">
-          <label className="text-xs font-semibold text-[var(--muted)] ml-1 mb-1 block">Status</label>
-          <select className="input" value={form.status || 'pending'} onChange={(e) => setForm({ ...form, status: e.target.value })}>
-            <option value="pending">Pending</option>
-            <option value="completed">Completed</option>
-          </select>
-        </div>
-        <button className="btn btn-primary px-8 h-[46px] shadow-glow-primary hover:scale-105" onClick={add}>
-          <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
-          Add Task
-        </button>
       </div>
 
       {loading ? (
@@ -298,6 +352,18 @@ const Todos = () => {
                 </div>
                 
                 <div className="flex items-center gap-2 shrink-0">
+                  {!trash && !isEditing && (
+                    <button
+                      className="p-1.5 text-[var(--muted)] hover:text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-lg transition-colors"
+                      onClick={() => {
+                         const r = prompt('Set reminder (YYYY-MM-DD HH:MM)', t.reminder ? new Date(t.reminder).toLocaleString('sv').slice(0,16) : '')
+                         if (r) api.patch(`/todos/${t._id}/reminder`, { reminder: new Date(r).toISOString() }).then(() => { toast.success('Reminder set'); load() }).catch(() => toast.error('Failed'))
+                      }}
+                      title={t.reminder ? `Reminder: ${new Date(t.reminder).toLocaleString()}` : "Set Reminder"}
+                    >
+                       <svg className={`w-4 h-4 ${t.reminder ? 'text-primary-500 fill-current' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>
+                    </button>
+                  )}
                   <button
                     className={`px-3 py-1 rounded-full text-xs font-medium border transition-all duration-300 hover:scale-105 active:scale-95 ${
                       t.status === 'completed' 

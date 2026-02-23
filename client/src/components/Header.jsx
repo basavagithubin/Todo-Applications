@@ -15,7 +15,7 @@ const Header = () => {
   }
 
   return (
-    <header className="sticky top-0 z-30 flex items-center justify-between px-6 py-4 bg-[var(--bg)]/80 backdrop-blur-md border-b border-[var(--border)] md:px-8">
+    <header className="sticky top-4 z-30 flex items-center justify-between px-6 py-4 bg-[var(--bg)]/80 backdrop-blur-md border border-[var(--border)] rounded-2xl md:px-8 mx-6 mt-4 shadow-sm">
       <div className="flex items-center gap-4">
         <h1 className="text-2xl font-bold text-[var(--text)] tracking-tight">
           {getTitle()}

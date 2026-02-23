@@ -14,7 +14,8 @@ const {
   monthly,
   addProgress,
   updateProgress,
-  deleteProgress
+  deleteProgress,
+  addReminder
 } = require('../controllers/todo.controller');
 const router = express.Router();
 
@@ -27,6 +28,7 @@ router.get('/monthly', monthly);
 router.post('/:id/progress', body('percent').isNumeric(), addProgress);
 router.patch('/:id/progress/:pid', [param('id').isMongoId(), param('pid').isMongoId()], updateProgress);
 router.delete('/:id/progress/:pid', [param('id').isMongoId(), param('pid').isMongoId()], deleteProgress);
+router.patch('/:id/reminder', [param('id').isMongoId(), body('reminder').optional().isISO8601()], addReminder);
 router.post(
   '/',
   [body('title').isString().isLength({ min: 1 }), body('priority').optional().isIn(['low', 'medium', 'high'])],

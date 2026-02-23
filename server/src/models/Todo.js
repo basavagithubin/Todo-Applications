@@ -26,6 +26,7 @@ const todoSchema = new mongoose.Schema(
     tags: [{ type: String }],
     subtasks: [subtaskSchema],
     isDeleted: { type: Boolean, default: false },
+    reminder: { type: Date },
     user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true }
   },
   { timestamps: true }

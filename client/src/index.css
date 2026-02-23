@@ -117,7 +117,7 @@
 
 @layer components {
   .layout {
-    @apply flex min-h-screen relative;
+    @apply flex min-h-screen relative gap-6;
   }
 
   .glass-panel {
@@ -165,7 +165,7 @@
   }
 
   .sidebar {
-    @apply w-64 border-r border-[var(--glass-border)] bg-[var(--glass-bg)] backdrop-blur-md flex flex-col h-screen sticky top-0 transition-all duration-300 hidden md:flex z-20;
+    @apply w-64 border border-[var(--glass-border)] bg-[var(--glass-bg)] backdrop-blur-md flex flex-col h-[calc(100vh-2rem)] sticky top-4 ml-4 my-4 rounded-3xl transition-all duration-300 hidden md:flex z-20 shadow-xl;
   }
 
   .mobile-nav {

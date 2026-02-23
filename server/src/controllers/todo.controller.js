@@ -192,6 +192,17 @@ const deleteProgress = async (req, res) => {
   res.json({ todo });
 };
 
+const addReminder = async (req, res) => {
+  const reminder = req.body.reminder ? new Date(req.body.reminder) : null;
+  const todo = await Todo.findOneAndUpdate(
+    { _id: req.params.id, user: req.user.id, isDeleted: false },
+    { reminder },
+    { new: true }
+  );
+  if (!todo) return res.status(404).json({ message: 'Not found' });
+  res.json({ todo });
+};
+
 module.exports = {
   createTodo,
   getTodos,
@@ -205,5 +216,6 @@ module.exports = {
   monthly,
   addProgress,
   updateProgress,
-  deleteProgress
+  deleteProgress,
+  addReminder
 }
