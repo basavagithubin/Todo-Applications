@@ -24,7 +24,7 @@ const MobileNav = () => {
             key={link.to} 
             to={link.to} 
             className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-colors ${
-              active ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-500 dark:text-gray-400'
+              active ? 'text-primary-600 dark:text-primary-400' : 'text-gray-500 dark:text-gray-400'
             }`}
           >
             {link.icon}

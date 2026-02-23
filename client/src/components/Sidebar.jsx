@@ -23,11 +23,11 @@ const Sidebar = () => {
   return (
     <aside className="sidebar">
       <div className="p-6">
-        <Link to="/dashboard" className="flex items-center gap-2 text-xl font-bold text-[var(--text)]">
-          <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
+        <Link to="/dashboard" className="flex items-center gap-3 text-2xl font-extrabold tracking-tight">
+          <div className="w-10 h-10 bg-gradient-to-br from-primary-400 to-secondary-500 rounded-xl flex items-center justify-center text-white shadow-lg shadow-primary-500/30 transform transition-transform hover:scale-110 hover:rotate-3">
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7" /></svg>
           </div>
-          <span>TodoPro</span>
+          <span className="bg-clip-text text-transparent bg-gradient-to-r from-primary-600 to-secondary-600">TodoPro</span>
         </Link>
       </div>
 
@@ -38,15 +38,17 @@ const Sidebar = () => {
             <Link
               key={link.to}
               to={link.to}
-              className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group ${
+              className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 group relative overflow-hidden ${
                 active 
-                  ? 'bg-indigo-50 text-indigo-600 dark:bg-indigo-900/20 dark:text-indigo-400 font-semibold shadow-sm' 
-                  : 'text-[var(--muted)] hover:bg-gray-50 hover:text-[var(--text)] dark:hover:bg-gray-800'
+                  ? 'bg-gradient-to-r from-primary-500/15 to-transparent text-primary-600 dark:text-primary-400 font-bold shadow-sm' 
+                  : 'text-[var(--muted)] hover:bg-gray-50/50 hover:text-[var(--text)] dark:hover:bg-gray-800/50 hover:pl-6'
               }`}
             >
-              {link.icon}
-              <span>{link.label}</span>
-              {active && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-indigo-600 dark:bg-indigo-400" />}
+              {active && <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary-500 rounded-r-full animate-slide-in-left" />}
+              <span className={`transition-colors duration-300 ${active ? 'text-primary-600 dark:text-primary-400' : 'group-hover:text-secondary-500'}`}>
+                {link.icon}
+              </span>
+              <span className="relative z-10">{link.label}</span>
             </Link>
           )
         })}
