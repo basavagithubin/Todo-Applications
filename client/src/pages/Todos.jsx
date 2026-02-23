@@ -141,7 +141,7 @@ const Todos = () => {
   }
 
   return (
-    <div className="space-y-8 max-w-[1600px] mx-auto pb-12">
+    <div className="space-y-8 w-full pb-12">
       {!trash ? (
         <div className="flex gap-2 border-b border-[var(--border)] pb-2 overflow-x-auto">
           {['all', 'pending', 'completed'].map((t) => (
